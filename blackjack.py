@@ -171,7 +171,6 @@ def run():
     game.deal_dealer()
 
     turn = 0
-
     while True:
         player_hand = game.p_hand()
         dealer_hand = game.d_hand()
