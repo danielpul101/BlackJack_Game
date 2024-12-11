@@ -152,9 +152,9 @@ def compare_hands(game: BlackJack):
         player_hand = game.check_win_or_lose(game._player_hand)
         dealer_hand = game.check_win_or_lose(game._dealer_hand)
 
-        if player_hand > dealer_hand:
+        if player_hand > dealer_hand or (game.score_player() == 21 and game.score_dealer() != 21):
             return 'player'
-        elif player_hand < dealer_hand:
+        elif player_hand < dealer_hand or (game.score_player() != 21 and game.score_dealer() == 21):
             return 'dealer'
         elif player_hand == dealer_hand:
             return 'push'
@@ -169,17 +169,19 @@ def run():
 
     game.deal_dealer()
     game.deal_dealer()
-    while True:
 
+    turn = 0
+
+    while True:
         player_hand = game.p_hand()
         dealer_hand = game.d_hand()
 
         print('Your hand:')
-        game.display_cards(game._player_hand)
+        game.display_cards(player_hand)
 
         print('\n')
         print('Dealer\'s hand:')
-        game.display_cards(game._dealer_hand[:1])
+        game.display_cards(dealer_hand[:1])
         print(f"""
                 ┌───────┐
                 │       │
@@ -188,7 +190,47 @@ def run():
                 └───────┘
                 """)
 
-        if game.score_dealer() == 21:
+        if game.score_dealer() == 21 and game.score_player() == 21:
+            print('Wow! You pushed with a blackjack!')
+            game.display_cards(game._player_hand)
+            game.display_cards(game._dealer_hand)
+            while True:
+                play_again = input("Do you want to play again? (y/n)").lower()
+
+                if play_again == 'y':
+                    game.true_reset()
+                    game.deal_player()
+                    game.deal_player()
+
+                    game.deal_dealer()
+                    game.deal_dealer()
+                    return True
+                elif play_again == 'n':
+                    return None
+                else:
+                    print('Invalid input, try again')
+
+
+        elif game.score_player() == 21:
+            print('You won with a blackjack!')
+            game.display_cards(game._player_hand)
+            while True:
+                play_again = input("Do you want to play again? (y/n)").lower()
+
+                if play_again == 'y':
+                    game.true_reset()
+                    game.deal_player()
+                    game.deal_player()
+
+                    game.deal_dealer()
+                    game.deal_dealer()
+                    return True
+                elif play_again == 'n':
+                    return None
+                else:
+                    print('Invalid input, try again')
+
+        elif game.score_dealer() == 21:
             print('Sorry, the dealer won with a blackjack!')
             game.display_cards(game._dealer_hand)
             while True:
@@ -211,18 +253,23 @@ def run():
 
         if result == 'hit' or result == 'stand':
             if result == 'hit':
+                turn += 1
                 game.deal_player()
-                result = game.check_win_or_lose(player_hand)
-                if result == 'win' or result == 'lose':
+                p_result = game.check_win_or_lose(player_hand)
+                if p_result == 'win' or p_result == 'lose':
                     print('Your hand:')
                     game.display_cards(game._player_hand)
                     print()
 
-                    if result == 'win':
-                        print(f'You had {game.score_player()} points, while the dealer had {game.score_dealer()} points.')
-                        print('You won!')
+                    if p_result == 'win':
+                        d_result = game.check_win_or_lose(dealer_hand)
+                        if d_result == 'win':
+                            print('Wow, you both had 21 and pushed!')
+                        else:
+                            print(f'You had {game.score_player()} points, while the dealer had {game.score_dealer()} points.')
+                            print('You won!')
 
-                    elif result == 'lose':
+                    elif p_result == 'lose':
                         print(f'You had {game.score_player()} points, while the dealer had {game.score_dealer()} points.')
                         print('You lost!')
 
@@ -243,6 +290,7 @@ def run():
                             print('Invalid input, try again')
 
             elif result == 'stand':
+                turn += 1
                 while game.check_win_or_lose(dealer_hand) < 17:
                     print('Dealer\'s hand:')
                     game.display_cards(game._dealer_hand)
@@ -255,13 +303,15 @@ def run():
 
                 outcome = compare_hands(game)
                 print(f'You had {game.score_player()} points, while the dealer had {game.score_dealer()} points.')
-                game.display_cards(game._dealer_hand)
+                if turn == 1:
+                    game.display_cards(game._dealer_hand)
                 if outcome == 'player' or game.score_dealer() > 21:
                     print('You won!')
                 elif outcome == 'dealer':
                     print('You lost!')
-                else:
+                elif outcome == 'push':
                     print('You pushed!')
+
 
                 while True:
                     play_again = input("Do you want to play again? (y/n)").lower()
